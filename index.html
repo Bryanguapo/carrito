@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1, h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    ul {
+      padding: 0;
+    }
+    li {
+      list-style: none;
+      margin-bottom: 15px;
+    }
+    .product, .cart-item {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    button {
+      padding: 5px 10px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .cart-item {
+      margin-bottom: 10px;
+    }
+
+    .sidebar {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100vh;
+  background-color:grey;
+  border: 1px solid #ccc;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.show {
+  display: block;
+}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Productos: Cartas</h1>
+    <ul>
+      <li v-for="product in products" :key="product.id" class="product">
+        <img :src="product.img" :alt="product.title">
+        <h2>{{ product.title }}</h2>
+        <p>Precio: {{ product.price }} €</p>
+        <button @click="addToCart(product)">Añadir al carrito</button>
+      </li>
+    </ul>
+
+
+<div>
+<!-- Agrega un botón para ver el carrito -->
+<button id="ver-carrito">Ver carrito</button>
+
+<!-- Agrega un contenedor para el sidebar -->
+<div id="sidebar" class="sidebar">
+    <nav><h2>Carrito</h2>
+    <ul v-if="cart.length > 0">
+      <li v-for="item in cart" :key="item.id" class="cart-item">
+        {{ item.title }} - Cantidad: {{ item.quantity }} - Total: {{ (item.quantity * item.price).toFixed(2) }} €
+      </li>
+    </ul>
+    <p v-else>El carrito está vacío</p>
+    
+    <p v-if="totalPrice > 0">Total del carrito: {{ totalPrice.toFixed(2) }} €</p>
+    </nav>
+    <h3>Convertir a:</h3>
+          <select v-model="selectedCurrency" @change="convertCurrency">
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+            <option value="CAD">CAD</option>
+          </select>
+      
+          <p v-if="convertedPrice > 0">Total en {{ selectedCurrency }}: {{ convertedPrice.toFixed(2) }}</p>
+</div>
+</div>
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          products: [
+            { id: 1, img: 'image/ballenagrande.webp' , title: 'Dondozo', price: 27.0 },
+            { id: 2, img: 'image/palomas.webp' , title: 'Starly ', price: 5.5 },
+            { id: 3, img: 'image/perrofire.webp' , title: 'Arcanine ', price: 12.99 },
+            { id: 4, img: 'image/pulpocorredor.webp' , title: 'Toedscool ', price: 15.75 },
+            { id: 5, img: 'image/rioluchikito.webp' , title: 'Riolu  chikito', price: 52.0 },
+            
+          ],
+          cart: [],
+          exchangeRates: {},
+          selectedCurrency: 'EUR',
+          convertedPrice: 0,
+
+        };
+      },
+      computed: {
+        totalPrice() {
+          return this.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        },
+      },
+methods: {
+  addToCart(product) {
+    const existingItem = this.cart.find((item) => item.id === product.id);
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      this.cart.push({ ...product, quantity: 1 });
+    }
+
+    //  contenido del sidebar
+    const sidebar = document.getElementById('sidebar');
+    const cartList = sidebar.querySelector('ul');
+    const cartItems = cartList.querySelectorAll('li');
+    const newItem = document.createElement('li');
+    cartList.appendChild(newItem);
+
+  },
+
+  async fetchExchangeRates() {
+          const apiKey = '29e2b486953da8bdabfe20d5';
+          const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/EUR`;
+          const response = await fetch(url);
+          const data = await response.json();
+          this.exchangeRates = data.conversion_rates;
+        },
+        convertCurrency() {
+          if (this.selectedCurrency === 'EUR') {
+            this.convertedPrice = this.totalPrice;
+          } else {
+            const rate = this.exchangeRates[this.selectedCurrency];
+            this.convertedPrice = rate ? this.totalPrice * rate : 0;
+          }
+        }
+      
+      
+},
+mounted() {
+        this.fetchExchangeRates();
+      }
+    }).mount('#app');
+
+    const verCarritoButton = document.getElementById('ver-carrito');
+verCarritoButton.addEventListener('click', () => {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('show');
+});
+  </script>
+</body>
+</html>     
